@@ -27,6 +27,11 @@ def spectrum(seq, k, n):
 
     return spectrum
 
+def oligo_counter(spectrum):
+    counted_dict = {oligo:spectrum.count(oligo) for oligo in spectrum}
+
+    return counted_dict
+
 
 def negative_errors(spectrum, error_count):
     removed_oligos = []  # storing oligonucleotides removed from spectrum
@@ -36,7 +41,7 @@ def negative_errors(spectrum, error_count):
         removed_oligos.append(removed_oligo)
         spectrum.remove(removed_oligo)
 
-    print(f'Negative: {removed_oligos}')
+    # print(f'Negative: {removed_oligos}')
     save_to('negative_errors.txt', removed_oligos)
 
     return spectrum
@@ -54,7 +59,7 @@ def positive_errors(spectrum, error_count, k):
         added_oligos.append(''.join(random_k_mer))
         spectrum.append(''.join(random_k_mer))
 
-    print(f'Positive: {added_oligos}')
+    # print(f'Positive: {added_oligos}')
     save_to('positive_errors.txt', added_oligos)
 
     return spectrum
@@ -103,23 +108,35 @@ def create_paths(G, start, desired_path_length):
     path = []
     curr = start
     path.append(curr)
-
-
     # display list of successors of the starting node
     # jakas petla while nie jest długość taka jak n - (k - 1)
     while len(path) != desired_path_length:
-        # print(f'Lista następników dla wierzchołka {curr}:')
+        print(f'Lista następników dla wierzchołka {curr}:')
         # Wyświetlanie wag krawędzi prowadzących do następników wierzchołka curr
         chosen_one = 0
         chosen_weight = 0
+        splits = 0
         for successor in G.successors(curr):
 
-            # print(f"Waga krawędzi prowadzącej z {curr} do następnika {successor}: {G.edges[curr, successor, 0]['weight']}")
+            print(f"Waga krawędzi prowadzącej z {curr} do następnika {successor}: {G.edges[curr, successor, 0]['weight']}")
             # funkcja ktora wybiera nastepny wierzcholek do sciechy
             successor_weight = G.edges[curr, successor, 0]['weight']
+            if successor_weight == chosen_weight:
+                splits += 1
+
             if chosen_one == 0 or successor_weight > chosen_weight:
                 chosen_one = successor
                 chosen_weight = successor_weight
+                splits = 0
+        print(f'Ilość rozwidleń dla wierzchołka {curr}: {splits}')
         curr = chosen_one
         path.append(curr)
     return path
+
+#TODO funkcja do porównywania sekwencji wynikowej z oryginalną
+#TODO <może> funkcja do sładania ścieżki złożonej z oligo spowrotem w sekwencje
+#TODO zaimplementować pamięć występowania danych oligo
+# (ile razy można wrócić do wierzchołka w grafie) korzystając z naszego super słownika
+#TODO <<ewentualnie>> zamknąć wybieranie następnika (successor) w odzielnej funkcji dla czytelności
+#TODO WINCYJ ŚCIEŻEK
+#TODO funkcja/sposób na porównanie ścieżek ze sobą i uznanie która lepsza, bez znajomości oryginalnej sekwencji
