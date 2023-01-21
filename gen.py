@@ -97,8 +97,6 @@ def create_graph(spectrum):
 
     nx.write_gexf(G, 'graph.xml')
 
-    #TODO zrobic ladne grafy z labelami
-
     nx.draw(G,with_labels=True)
     #plt.show()
 
@@ -133,10 +131,15 @@ def add_random_edge(G, vertex, path):
         successors.append(successor)
 
     random_vertex = random.choice(successors)
-    path.append(random_vertex)
     return random_vertex
 
+def evaluate(G, path):
+    coverage_sum = 0
+    for i in range(len(path)-1):
+        A = path[i]
+        B = path[i + 1]
+        coverage_sum += G.edges[A, B, 0]['weight']
+    return coverage_sum
 
 #TODO zaimplementować pamięć występowania danych oligo
 # (ile razy można wrócić do wierzchołka w grafie) korzystając z naszego super słownika
-#TODO funkcja/sposób na porównanie ścieżek ze sobą i uznanie która lepsza, bez znajomości oryginalnej sekwencji

@@ -44,16 +44,17 @@ paths.append(gen.create_paths(graph, start_oligo, path, oligo_count))
 
 first_path = paths[0]
 
-for x in range(pop):
+for x in range(1, pop):
     immature_path = first_path[:x]
-    resume_vertex = gen.add_random_edge(graph, first_path[x], immature_path) # wylosuj wybór krawędzi dla wierzchołka num i dodaj do ścieżki
+    resume_vertex = gen.add_random_edge(graph, immature_path[x-1], immature_path) # wylosuj wybór krawędzi dla wierzchołka num i dodaj do ścieżki
     paths.append(gen.create_paths(graph, resume_vertex, immature_path, oligo_count))
 
 
 print(f'Przewidziane sciezki\n')
 
 for solution in paths:
-    print(solution)
+    print(f'{solution}\n')
+    print(f'Suma pokrycia: {gen.evaluate(graph, solution)}')
 
 
 
