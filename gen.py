@@ -104,39 +104,39 @@ def create_graph(spectrum):
 
     return G
 
-def create_paths(G, start, desired_path_length):
-    path = []
+def create_paths(G, start, path, desired_path_length):
     curr = start
     path.append(curr)
     # display list of successors of the starting node
     # jakas petla while nie jest długość taka jak n - (k - 1)
     while len(path) != desired_path_length:
-        print(f'Lista następników dla wierzchołka {curr}:')
+        # print(f'Lista następników dla wierzchołka {curr}:')
         # Wyświetlanie wag krawędzi prowadzących do następników wierzchołka curr
         chosen_one = 0
         chosen_weight = 0
-        splits = 0
         for successor in G.successors(curr):
-
-            print(f"Waga krawędzi prowadzącej z {curr} do następnika {successor}: {G.edges[curr, successor, 0]['weight']}")
+            # print(f"Waga krawędzi prowadzącej z {curr} do następnika {successor}: {G.edges[curr, successor, 0]['weight']}")
             # funkcja ktora wybiera nastepny wierzcholek do sciechy
             successor_weight = G.edges[curr, successor, 0]['weight']
-            if successor_weight == chosen_weight:
-                splits += 1
 
             if chosen_one == 0 or successor_weight > chosen_weight:
                 chosen_one = successor
                 chosen_weight = successor_weight
-                splits = 0
-        print(f'Ilość rozwidleń dla wierzchołka {curr}: {splits}')
         curr = chosen_one
         path.append(curr)
     return path
 
-#TODO funkcja do porównywania sekwencji wynikowej z oryginalną
-#TODO <może> funkcja do sładania ścieżki złożonej z oligo spowrotem w sekwencje
+def add_random_edge(G, vertex, path):
+    successors = []
+
+    for successor in G.successors(vertex):
+        successors.append(successor)
+
+    random_vertex = random.choice(successors)
+    path.append(random_vertex)
+    return random_vertex
+
+
 #TODO zaimplementować pamięć występowania danych oligo
 # (ile razy można wrócić do wierzchołka w grafie) korzystając z naszego super słownika
-#TODO <<ewentualnie>> zamknąć wybieranie następnika (successor) w odzielnej funkcji dla czytelności
-#TODO WINCYJ ŚCIEŻEK
 #TODO funkcja/sposób na porównanie ścieżek ze sobą i uznanie która lepsza, bez znajomości oryginalnej sekwencji

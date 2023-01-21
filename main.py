@@ -1,10 +1,11 @@
 import gen
 
 #parametry
-n = 30
+n = 28
 k = 5
 ne = 2
 pe = 2
+pop = 5
 #
 
 #seq = gen.dna(n) # to jest losowe
@@ -37,10 +38,22 @@ gen.save_to('spectrum.txt', set(spectrum))
 #graph itd
 graph = gen.create_graph(spectrum)
 oligo_count = len(spectrum)
-path = gen.create_paths(graph, start_oligo, oligo_count)
+paths = []
+path = []
+paths.append(gen.create_paths(graph, start_oligo, path, oligo_count))
+
+first_path = paths[0]
+
+for x in range(pop):
+    immature_path = first_path[:x]
+    resume_vertex = gen.add_random_edge(graph, first_path[x], immature_path) # wylosuj wybór krawędzi dla wierzchołka num i dodaj do ścieżki
+    paths.append(gen.create_paths(graph, resume_vertex, immature_path, oligo_count))
 
 
-print(f'Przewidziana sciezki (cud jak sie nie wypierniczy)\n{path}')
+print(f'Przewidziane sciezki\n')
+
+for solution in paths:
+    print(solution)
 
 
 
