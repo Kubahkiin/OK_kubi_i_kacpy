@@ -1,16 +1,18 @@
 import gen
 
 #parametry
-n = 28
-k = 5
-ne = 2
-pe = 2
-pop = 5
+n = 30 #długość sekwencji
+k = 4   #długość podciągu
+ne = 0  #błędy negatywne
+pe = 0  #błędy pozytywne
+pop = 5 #populacja
 #
+oligo_count = n - (k - 1)
 
 #seq = gen.dna(n) # to jest losowe
 seq = "AAATTAAATTGACCCAAAATCTCCGTGAGT" # a to nie
 spectrum = gen.spectrum(seq, k, n)
+original_seq_spectrum = spectrum
 # print(''.join(seq))
 # dodanie błędów
 # błędy negatywne
@@ -18,7 +20,7 @@ gen.negative_errors(spectrum, ne)
 # błędy pozytywne
 gen.positive_errors(spectrum, pe, k)
 
-start_oligo = spectrum[0]
+start_oligo = original_seq_spectrum[0]
 fake_list = []  # save_to() opgens on lists so we fool it with a fake one to save one element
 fake_list.append(start_oligo)
 gen.save_to('start.txt', fake_list)
@@ -29,7 +31,7 @@ spectrum.sort()
 
 oligo_counts_dict = gen.oligo_counter(spectrum)
 
-# print(f"To nasz super słownik policzony{oligo_counts_dict}")
+print(f"To nasz super słownik policzony{oligo_counts_dict}")
 
 
 gen.save_to('spectrum.txt', set(spectrum))
@@ -37,24 +39,26 @@ gen.save_to('spectrum.txt', set(spectrum))
 
 #graph itd
 graph = gen.create_graph(spectrum)
-oligo_count = len(spectrum)
 paths = []
 path = []
-paths.append(gen.create_paths(graph, start_oligo, path, oligo_count))
+paths.append(gen.create_paths(graph, start_oligo, path, oligo_count, oligo_counts_dict))
+print(f"To nasz super słownik policzony2{oligo_counts_dict}")
 
 first_path = paths[0]
-
 for x in range(1, pop):
-    immature_path = first_path[:x]
-    resume_vertex = gen.add_random_edge(graph, immature_path[x-1], immature_path) # wylosuj wybór krawędzi dla wierzchołka num i dodaj do ścieżki
-    paths.append(gen.create_paths(graph, resume_vertex, immature_path, oligo_count))
-
+    paths.append(gen.mutate_path(graph, first_path, x, oligo_count, oligo_counts_dict))
 
 print(f'Przewidziane sciezki\n')
 
 for solution in paths:
-    print(f'{solution}\n')
-    print(f'Suma pokrycia: {gen.evaluate(graph, solution)}')
+    print(f'{solution}')
+    solution_seq = gen.build_sequence(graph, solution)
+    print(f'{solution_seq}')
+    coverage_sum = gen.evaluate(graph, solution)
+    similarity = gen.compare(seq, solution_seq)
+    print(f'Suma pokrycia: {coverage_sum}\t'
+          f'Średnie pokrycie: {round(coverage_sum/oligo_count, 2)}\t'
+          f'Podobieństwo do oryginalnej sekwencji: {similarity}\n')
 
 
 
