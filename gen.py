@@ -148,6 +148,11 @@ def create_paths(G, start, path, desired_path_length, oligo_counts_dict_original
         oligo_counts_dict[curr] -= 1
     return path
 
+def random_starting_node(G):
+    nodes = list(G.nodes())
+    return random.choice(nodes)
+
+
 def add_random_edge(G, vertex, oligo_count_immature):
     successors = []
 
@@ -193,12 +198,79 @@ def compare(seq1, seq2):
 
     return score
 
-#TODO zaimplementować pamięć występowania danych oligo
-# (ile razy można wrócić do wierzchołka w grafie) korzystając z naszego super słownika
+class Solution:
+    def __init__(self, coverage, mean_coverage, oligo_list, sequence):
+        self.coverage = coverage
+        self.mean_coverage = mean_coverage
+        self.oligo_list = oligo_list
+        self.sequence = sequence
+
+def display_solutions(solutions, original_seq):
+    for s in solutions:
+        similarity = compare(original_seq, s.sequence)
+        print(f'{s.oligo_list}')
+        print(f'{s.sequence}')
+        print(f'Suma pokrycia: {s.coverage}\t'
+              f'Średnie pokrycie: {s.mean_coverage}\t'
+              f'Podobieństwo do oryginalnej sekwencji: {similarity}\n')
+
+def ourKey(s):
+  return (s.mean_coverage, s.coverage)
+
+def ranking(solutions):
+    solutions.sort(key=ourKey, reverse=True)
 
 ##############################
 #### Wygenerowane funkcje ####
 ##############################
+
+def find_lcs(seq1, seq2):
+    """
+    Znajduje najdłuższy wspólny sufiks (LCS) dwóch sekwencji oligonukleotydów.
+    seq1 i seq2 to listy oligonukleotydów.
+    Funkcja zwraca LCS w postaci listy oligonukleotydów.
+    """
+    m = len(seq1)
+    n = len(seq2)
+    lcs_length = 0
+    end = 0
+
+    # inicjalizacja tablicy LCS
+    lcs = [[0 for j in range(n+1)] for i in range(m+1)]
+
+    # wypełnienie tablicy LCS
+    for i in range(1, m+1):
+        for j in range(1, n+1):
+            if seq1[i-1] == seq2[j-1]:
+                lcs[i][j] = lcs[i-1][j-1] + 1
+                if lcs[i][j] > lcs_length:
+                    lcs_length = lcs[i][j]
+                    end = i
+            else:
+                lcs[i][j] = 0
+
+    # wyciągnięcie LCS
+    start = end - lcs_length
+    lcs_seq = seq1[start:end]
+
+    return lcs_seq
+
+def crossover(seq1, seq2):
+    """
+    Realizuje krzyżowanie (crossover) dwóch sekwencji oligonukleotydów.
+    seq1 i seq2 to listy oligonukleotydów.
+    Funkcja zwraca nową sekwencję oligonukleotydów powstałą przez krzyżowanie.
+    """
+    lcs = find_lcs(seq1, seq2)
+
+    if not lcs:
+        return []
+
+    idx = seq1.index(lcs[0])
+    new_seq = seq1[:idx] + seq2[seq2.index(lcs[0]):]
+
+    return new_seq
+
 
 def mutate_path_ai(graph, path, oligo_count, oligo_counts_dict):
     # wybierz losowy indeks na którym dokonamy podziału
