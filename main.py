@@ -2,7 +2,7 @@ import gen
 
 #parametry
 n = 100 #długość sekwencji
-k = 10   #długość podciągu
+k = 5   #długość podciągu
 ne = 0 #błędy negatywne
 pe = 0  #błędy pozytywne
 pop = 10 #populacja
