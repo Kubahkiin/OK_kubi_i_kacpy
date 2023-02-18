@@ -16,6 +16,12 @@ def save_to(filename, to_save):
         f1.writelines(stuff + '\n')
     f1.close()
 
+def load_from(filename):
+    f1 = open(out_dir.joinpath(filename), 'r')
+    lines = f1.read().splitlines()
+    f1.close()
+    return lines
+
 
 def dna(n):
     return ''.join(random.choices(nucs, k=n))
