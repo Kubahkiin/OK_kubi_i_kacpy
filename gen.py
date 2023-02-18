@@ -112,7 +112,11 @@ def create_paths(G, start, path, desired_path_length, oligo_counts_dict_original
     oligo_counts_dict[curr] -= 1
     # display list of successors of the starting node
     # jakas petla while nie jest długość taka jak n - (k - 1)
+    #print(path)
+    #print(len(path))
     while len(path) != desired_path_length:
+        #print(path)
+        #print(len(path))
         chosen_one = 0
         chosen_weight = 0
         for successor in G.successors(curr):
@@ -129,23 +133,20 @@ def create_paths(G, start, path, desired_path_length, oligo_counts_dict_original
             if chosen_one == 0 or successor_weight > chosen_weight:
                 chosen_one = successor
                 chosen_weight = successor_weight
+
         curr = chosen_one
 
         if curr == 0:
-            forbidden.append(path.pop())
-            curr = path[-1]
-            continue
+            return path
+            # forbidden_one = path.pop()
+            # forbidden.append(forbidden_one)
+            # oligo_counts_dict[forbidden_one] += 1
+            # curr = path[-1]
+            # continue
 
         path.append(curr)
         oligo_counts_dict[curr] -= 1
     return path
-
-def build_sequence(G, path):
-    sequence = path[0]
-    for i in range(1, len(path)):
-        coverage = G.edges[path[i-1], path[i], 0]['weight'] # ile odciąć
-        sequence += path[i][coverage:]
-    return sequence
 
 def add_random_edge(G, vertex, oligo_count_immature):
     successors = []
@@ -156,18 +157,24 @@ def add_random_edge(G, vertex, oligo_count_immature):
         successors.append(successor)
 
     random_vertex = random.choice(successors)
-    oligo_count_immature[random_vertex] -= 1
     return random_vertex
 
-def mutate_path(G, original_path, mutatuion_position, oligo_count, oligo_counts_dict_original):
+def mutate_path(G, original_path, oligo_count, oligo_counts_dict_original):
     oligo_count_immature = copy.deepcopy(oligo_counts_dict_original)
-    immature_path = original_path[:mutatuion_position]
+    mutation_position = random.randint(1, len(original_path) - 1)
+    immature_path = original_path[:mutation_position]
     for oligo in immature_path:
         oligo_count_immature[oligo] -= 1
 
-    resume_vertex = add_random_edge(G, immature_path[mutatuion_position - 1], oligo_count_immature)  # wylosuj wybór krawędzi dla wierzchołka num i dodaj do ścieżki
+    resume_vertex = add_random_edge(G, immature_path[mutation_position - 1], oligo_count_immature)  # wylosuj następnika dla wierzchołka w którym ma dojść do mutacji
     return create_paths(G, resume_vertex, immature_path, oligo_count, oligo_count_immature)
 
+def build_sequence(G, path):
+    sequence = path[0]
+    for i in range(1, len(path)):
+        coverage = G.edges[path[i-1], path[i], 0]['weight'] # ile odciąć
+        sequence += path[i][coverage:]
+    return sequence
 
 def evaluate(G, path):
     coverage_sum = 0
@@ -188,3 +195,75 @@ def compare(seq1, seq2):
 
 #TODO zaimplementować pamięć występowania danych oligo
 # (ile razy można wrócić do wierzchołka w grafie) korzystając z naszego super słownika
+
+##############################
+#### Wygenerowane funkcje ####
+##############################
+
+def mutate_path_ai(graph, path, oligo_count, oligo_counts_dict):
+    # wybierz losowy indeks na którym dokonamy podziału
+    index = random.randint(0, len(path) - 1)
+
+    # przetnij ścieżkę na wybranym indeksie
+    new_path = path[:index + 1]
+
+    # stwórz nową część ścieżki korzystając z create_paths
+    spectrum = new_path[-1]
+    new_part = create_paths(graph, spectrum, [], oligo_count - len(new_path) + 1, oligo_counts_dict)
+
+    # dodaj nową część ścieżki do nowej ścieżki
+    new_path.extend(new_part)
+
+    return new_path
+
+
+def create_path_using_weights(G, start, path, desired_length, oligo_counts_dict_original):
+    oligo_counts_dict = copy.deepcopy(oligo_counts_dict_original)
+    start_node = start
+    path.append(start_node)
+    oligo_counts_dict[start_node] -= 1
+
+    while len(path) < desired_length:
+        current_node = path[-1]
+        neighbors = list(G.neighbors(current_node))
+        weights = [G[current_node][neighbor][0]['weight'] for neighbor in neighbors]
+        max_weight = max(weights)
+        max_weight_neighbors = [neighbor for neighbor in neighbors if
+                                G[current_node][neighbor][0]['weight'] == max_weight]
+        next_node = max_weight_neighbors[0]
+
+        if oligo_counts_dict[next_node] > 0:
+            path.append(next_node)
+            oligo_counts_dict[next_node] -= 1
+        else:
+            break
+
+    return path
+
+def create_paths_ai(G, start, length, oligo_counts_dict_original):
+    oligo_counts_dict = copy.deepcopy(oligo_counts_dict_original)
+    paths = [[start]]
+    for _ in range(length-1):
+        new_paths = []
+        for path in paths:
+            curr_node = path[-1]
+            neighbors = list(G.successors(curr_node))
+            if not neighbors:
+                continue
+            weights = []
+            for neighbor in neighbors:
+                weights.append(G[curr_node][neighbor][0]['weight'])
+            max_weight = max(weights)
+            candidates = [neighbors[i] for i, weight in enumerate(weights) if weight == max_weight]
+            next_node = candidates[0]
+            if next_node not in oligo_counts_dict:
+                continue
+            if oligo_counts_dict[next_node] == 0:
+                continue
+            oligo_counts_dict[next_node] -= 1
+            new_path = path + [next_node]
+            new_paths.append(new_path)
+        if not new_paths:
+            break
+        paths = new_paths
+    return paths
