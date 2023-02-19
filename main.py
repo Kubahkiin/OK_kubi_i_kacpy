@@ -3,13 +3,13 @@ import gen
 #parametry
 n = 300 #długość sekwencji
 k = 7   #długość podciągu
-ne = 20 #błędy negatywne
-pe = 20  #błędy pozytywne
+ne = 150 #błędy negatywne
+pe = 200  #błędy pozytywne
 pop = 50 #populacja
-gen_iter = 10 #liczba iteracji metaheurystyki
+gen_iter = 50 #liczba iteracji metaheurystyki
 mutation_chance = 5 #szansa na losowe mutacje
 top = 5 # ilość wybranych najlepszych rozwiązań do krzyżowania
-lucky_chance = 10 # szansa na przejście do krzyżowania dla pozostałych
+lucky_chance = 5 # szansa na przejście do krzyżowania dla pozostałych
 max_population = 100 # maksymalna liczba populacji na generację
 #
 oligo_count = n - (k - 1)
@@ -67,11 +67,12 @@ for steps in range(1):
     #print("Ścieżki posortowane względem pokrycia")
 
 
-    best_solutions = []
+    original_solution = gen.path_to_solution(graph, first_path)
+    best_solutions = [original_solution]
     #best_solutions[7]
     for generation in range(gen_iter):
         print(f'######################################\n'
-              f'########### GENERACJA {generation} ##############\n'
+              f'########### GENERACJA {generation+1} ##############\n'
               '######################################')
         # Eliminacja zbyt krótkich ścieżek
         killed = gen.kill(solutions, n)
@@ -101,3 +102,4 @@ for steps in range(1):
         best_solutions.append(solutions[0])
 
 
+    gen.display_solutions(best_solutions, seq)

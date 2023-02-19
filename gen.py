@@ -217,6 +217,15 @@ def display_solutions(solutions, original_seq):
               f'Średnie pokrycie: {s.mean_coverage}\t'
               f'Podobieństwo do oryginalnej sekwencji: {similarity}\n')
 
+def display_solutions_light(solutions, original_seq):
+    for s in solutions:
+        similarity = compare(original_seq, s.sequence)
+        print(f'{s.oligo_list}')
+        print(f'{s.sequence}')
+        print(f'Suma pokrycia: {s.coverage}\t'
+              f'Średnie pokrycie: {s.mean_coverage}\t'
+              f'Podobieństwo do oryginalnej sekwencji: {similarity}\n')
+
 def ourKey(s):
   return (s.mean_coverage, s.coverage)
 
@@ -227,7 +236,7 @@ def kill(solutions, n):
     to_kill = []
     killed = 0
     for solution in solutions:
-        if len(solution.sequence) < n or len(solution.sequence) > 2*n:
+        if len(solution.sequence) < n or len(solution.sequence) > 1.5*n:
             to_kill.append(solution)
             killed += 1
 
