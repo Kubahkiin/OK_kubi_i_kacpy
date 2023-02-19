@@ -98,8 +98,8 @@ for steps in range(1):
         solutions = gen.natural_selection(solutions, max_population)
         # Wybór obecnej najlepszej ścieżki
         print("Najlepsze rozwiązanie w tej generacji: ")
-        gen.display_solutions([solutions[0]], seq)
+        #gen.display_solutions([solutions[0]], seq)
         best_solutions.append(solutions[0])
 
 
-    gen.display_solutions(best_solutions, seq)
+    gen.display_solutions_light(best_solutions, seq)

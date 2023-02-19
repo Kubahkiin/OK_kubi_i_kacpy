@@ -220,8 +220,6 @@ def display_solutions(solutions, original_seq):
 def display_solutions_light(solutions, original_seq):
     for s in solutions:
         similarity = compare(original_seq, s.sequence)
-        print(f'{s.oligo_list}')
-        print(f'{s.sequence}')
         print(f'Suma pokrycia: {s.coverage}\t'
               f'Średnie pokrycie: {s.mean_coverage}\t'
               f'Podobieństwo do oryginalnej sekwencji: {similarity}\n')
