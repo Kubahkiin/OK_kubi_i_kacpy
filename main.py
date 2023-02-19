@@ -1,25 +1,27 @@
 import gen
 
 #parametry
-n = 100 #długość sekwencji
-k = 4   #długość podciągu
-ne = 0 #błędy negatywne
-pe = 0  #błędy pozytywne
-pop = 10 #populacja
-gen_iter = 1
-mutation_chance = 0.05
+n = 300 #długość sekwencji
+k = 7   #długość podciągu
+ne = 20 #błędy negatywne
+pe = 20  #błędy pozytywne
+pop = 50 #populacja
+gen_iter = 10 #liczba iteracji metaheurystyki
+mutation_chance = 5 #szansa na losowe mutacje
+top = 5 # ilość wybranych najlepszych rozwiązań do krzyżowania
+lucky_chance = 10 # szansa na przejście do krzyżowania dla pozostałych
+max_population = 100 # maksymalna liczba populacji na generację
 #
 oligo_count = n - (k - 1)
 
-instances = gen.load_from("instances.txt")
+seq = gen.load_from("dna_300.txt")
 numerek = 1
-for seq in instances:
+for steps in range(1):
     print(f'INSTANCJA NR {numerek}\n'
           f'{seq}')
     numerek += 1
     spectrum = gen.spectrum(seq, k, n)
     original_seq_spectrum = spectrum
-    # print(''.join(seq))
     # dodanie błędów
     # błędy negatywne
     gen.negative_errors(spectrum, ne)
@@ -27,21 +29,14 @@ for seq in instances:
     gen.positive_errors(spectrum, pe, k)
 
     start_oligo = original_seq_spectrum[0]
-    fake_list = []  # save_to() opgens on lists so we fool it with a fake one to save one element
-    fake_list.append(start_oligo)
-    gen.save_to('start.txt', fake_list)
     print(f'Oligonukleotyd startowy: {start_oligo}')
-    # print(spectrum)
+
     # sortowanie w celu pomieszania sekwnecji
     spectrum.sort()
 
     oligo_counts_dict = gen.oligo_counter(spectrum)
 
     # print(f"To nasz super słownik policzony{oligo_counts_dict}")
-
-
-    gen.save_to('spectrum.txt', set(spectrum))
-    # print(set(spectrum))
 
     #graph itd
     graph = gen.create_graph(spectrum)
@@ -72,61 +67,37 @@ for seq in instances:
     #print("Ścieżki posortowane względem pokrycia")
 
 
+    best_solutions = []
+    #best_solutions[7]
     for generation in range(gen_iter):
         print(f'######################################\n'
-              f'########## GENERACJA {generation} #############\n'
+              f'########### GENERACJA {generation} ##############\n'
               '######################################')
         # Eliminacja zbyt krótkich ścieżek
+        killed = gen.kill(solutions, n)
+        print(f'Eliminacja za krótkich sekwencji: {killed}')
         # Sortowanie ścieżek po funkcji celu
         gen.ranking(solutions)
-        gen.display_solutions(solutions, seq)
+        #gen.display_solutions(solutions, seq)
         # Wybór ścieżek do crossover
+        pick = gen.pick_for_crossover(solutions, top, lucky_chance)
+        solutions_to_cross = pick[0]
+        lucky = pick[1]
+        print(f'Wybrano {top} najlepszych + {lucky} miało szczęście i też zostaną skrzyżowane')
+        #gen.display_solutions(solutions_to_cross, seq)
         # Crossover, jeśli nie można, to wymuszona mutacja
+        baby_count = gen.make_babies(graph, solutions_to_cross, n, solutions, oligo_count, oligo_counts_dict)
+        print(f'W wyniku krzyżowania powstało {baby_count} nowych rozwiązań')
         # Mutacja wszystkich ścieżek z prawdopodobieństwem jakimś
+        mutant_count = gen.random_mutations(solutions, mutation_chance, graph, oligo_count, oligo_counts_dict, n)
+        print(f'W wyniku losowych mutacji z prawdopodobieństwem {mutation_chance}% powstało {mutant_count} nowych rozwiązań')
         # Ponowny ranking
+        gen.ranking(solutions)
         # Eliminacja ostatnich pozycji w rankingu
-        # Wybór obecnej nalepszej ścieżki
-
-
-    # print("Test krzyżowania")
-    # print(paths[0])
-    #
-    # solution_seq = gen.build_sequence(graph, paths[0])
-    # print(f'{solution_seq}')
-    # coverage_sum = gen.evaluate(graph, paths[0])
-    # similarity = gen.compare(seq, solution_seq)
-    # print(f'Suma pokrycia: {coverage_sum}\t'
-    #      f'Średnie pokrycie: {round(coverage_sum/oligo_count, 2)}\t'
-    #      f'Podobieństwo do oryginalnej sekwencji: {similarity}\n')
-    #
-    # print(paths[1])
-    #
-    # solution_seq = gen.build_sequence(graph, paths[1])
-    # print(f'{solution_seq}')
-    # coverage_sum = gen.evaluate(graph, paths[1])
-    # similarity = gen.compare(seq, solution_seq)
-    # print(f'Suma pokrycia: {coverage_sum}\t'
-    #      f'Średnie pokrycie: {round(coverage_sum/oligo_count, 2)}\t'
-    #      f'Podobieństwo do oryginalnej sekwencji: {similarity}\n')
-    #
-    # print('Znalezione miejsce krzyżowania (LCS): ')
-    # lcs = gen.find_lcs(paths[0], paths[1])
-    # print(lcs)
-    # print("Ścieżki powstałe w wyniku krzyżowania: ")
-    # new_path = gen.crossover(paths[0], paths[1])
-    # print(new_path)
-    #
-    # solution_seq = gen.build_sequence(graph, new_path)
-    # print(f'{solution_seq}')
-    # coverage_sum = gen.evaluate(graph, new_path)
-    # similarity = gen.compare(seq, solution_seq)
-    # print(f'Suma pokrycia: {coverage_sum}\t'
-    #      f'Średnie pokrycie: {round(coverage_sum/oligo_count, 2)}\t'
-    #      f'Podobieństwo do oryginalnej sekwencji: {similarity}\n')
-    #
-
-
-
-
+        solutions = gen.natural_selection(solutions, max_population)
+        # Wybór obecnej najlepszej ścieżki
+        print("Najlepsze rozwiązanie w tej generacji: ")
+        gen.display_solutions([solutions[0]], seq)
+        best_solutions.append(solutions[0])
 
 

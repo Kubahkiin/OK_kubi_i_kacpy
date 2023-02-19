@@ -1,10 +1,7 @@
 import gen
 
-ile = 10
-jak_dlugie = 100
-instances = []
+jak_dlugie = 300
 
-for i in range(ile):
-    instances.append(gen.dna(jak_dlugie))
+instance = gen.dna(jak_dlugie)
 
-gen.save_to("instances.txt", instances)
+gen.save_to(f'dna_{jak_dlugie}.txt', [instance])

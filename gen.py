@@ -18,9 +18,9 @@ def save_to(filename, to_save):
 
 def load_from(filename):
     f1 = open(out_dir.joinpath(filename), 'r')
-    lines = f1.read().splitlines()
+    line = f1.read()
     f1.close()
-    return lines
+    return line
 
 
 def dna(n):
@@ -49,9 +49,6 @@ def negative_errors(spectrum, error_count):
         removed_oligos.append(removed_oligo)
         spectrum.remove(removed_oligo)
 
-    # print(f'Negative: {removed_oligos}')
-    save_to('negative_errors.txt', removed_oligos)
-
     return spectrum
 
 
@@ -67,8 +64,7 @@ def positive_errors(spectrum, error_count, k):
         added_oligos.append(''.join(random_k_mer))
         spectrum.append(''.join(random_k_mer))
 
-    print(f'Positive: {added_oligos}')
-    save_to('positive_errors.txt', added_oligos)
+    #print(f'Positive: {added_oligos}')
 
     return spectrum
 
@@ -110,7 +106,7 @@ def create_graph(spectrum):
 
     return G
 
-def create_paths(G, start, path, desired_path_length, oligo_counts_dict_original):
+def create_paths(G, start, path, max_length, oligo_counts_dict_original):
     oligo_counts_dict = copy.deepcopy(oligo_counts_dict_original)
     forbidden = []
     curr = start
@@ -120,7 +116,7 @@ def create_paths(G, start, path, desired_path_length, oligo_counts_dict_original
     # jakas petla while nie jest długość taka jak n - (k - 1)
     #print(path)
     #print(len(path))
-    while len(path) != desired_path_length:
+    for step in range(max_length):
         #print(path)
         #print(len(path))
         chosen_one = 0
@@ -170,15 +166,16 @@ def add_random_edge(G, vertex, oligo_count_immature):
     random_vertex = random.choice(successors)
     return random_vertex
 
-def mutate_path(G, original_path, oligo_count, oligo_counts_dict_original):
+def mutate_path(G, original_path, max_length, oligo_counts_dict_original):
     oligo_count_immature = copy.deepcopy(oligo_counts_dict_original)
     mutation_position = random.randint(1, len(original_path) - 1)
     immature_path = original_path[:mutation_position]
     for oligo in immature_path:
         oligo_count_immature[oligo] -= 1
 
+    new_max_length = max_length - len(immature_path)
     resume_vertex = add_random_edge(G, immature_path[mutation_position - 1], oligo_count_immature)  # wylosuj następnika dla wierzchołka w którym ma dojść do mutacji
-    return create_paths(G, resume_vertex, immature_path, oligo_count, oligo_count_immature)
+    return create_paths(G, resume_vertex, immature_path, new_max_length, oligo_count_immature)
 
 def build_sequence(G, path):
     sequence = path[0]
@@ -226,6 +223,75 @@ def ourKey(s):
 def ranking(solutions):
     solutions.sort(key=ourKey, reverse=True)
 
+def kill(solutions, n):
+    to_kill = []
+    killed = 0
+    for solution in solutions:
+        if len(solution.sequence) < n or len(solution.sequence) > 2*n:
+            to_kill.append(solution)
+            killed += 1
+
+    for dead in to_kill:
+        solutions.remove(dead)
+
+    return len(to_kill)
+
+def pick_for_crossover(solutions, top, lucky_chance):
+    chosen = []
+    chosen.extend(solutions[:top])
+
+    for lucky_solution in solutions[top:]:
+        if random.randint(0, 100) < lucky_chance:
+            chosen.append(lucky_solution)
+            lucky_chance -= 1
+
+    return (chosen, len(chosen))
+
+def make_babies(G, solutions_to_cross, n, solutions, oligo_count, oligo_counts_dict_original):
+    babies = []
+    for mom in solutions_to_cross:
+        for dad in solutions_to_cross:
+            if mom == dad:
+                continue
+            baby_path = crossover(mom.oligo_list, dad.oligo_list, G, oligo_count, oligo_counts_dict_original)
+            baby = path_to_solution(G, baby_path)
+            babies.append(baby)
+
+            baby_path = crossover(dad.oligo_list, mom.oligo_list, G, oligo_count, oligo_counts_dict_original)
+            baby = path_to_solution(G, baby_path)
+            babies.append(baby)
+    kill(babies, n)
+    solutions.extend(babies)
+
+    return len(babies)
+
+def path_to_solution(G, path):
+    solution_seq = build_sequence(G, path)
+    coverage_sum = evaluate(G, path)
+    mean_coverage = round(coverage_sum / len(path), 2)
+
+    return Solution(coverage_sum, mean_coverage, path, solution_seq)
+
+def random_mutations(solutions, mutation_chance, G, oligo_count, oligo_counts_dict_original, n):
+    mutants = []
+    for solution in solutions:
+        if random.randint(0, 100) < mutation_chance:
+            mutant_path = mutate_path(G, solution.oligo_list, oligo_count, oligo_counts_dict_original)
+            mutant = path_to_solution(G, mutant_path)
+            mutants.append(mutant)
+    kill(mutants, n)
+    solutions.extend(mutants)
+
+    return len(mutants)
+
+def natural_selection(solutions, max_population):
+    new_solutions = solutions
+    if(len(solutions) > max_population):
+        new_solutions = solutions[:max_population]
+
+    return new_solutions
+
+
 ##############################
 #### Wygenerowane funkcje ####
 ##############################
@@ -261,7 +327,7 @@ def find_lcs(seq1, seq2):
 
     return lcs_seq
 
-def crossover(seq1, seq2):
+def crossover(seq1, seq2, G, oligo_count, oligo_counts_dict_original):
     """
     Realizuje krzyżowanie (crossover) dwóch sekwencji oligonukleotydów.
     seq1 i seq2 to listy oligonukleotydów.
@@ -270,78 +336,10 @@ def crossover(seq1, seq2):
     lcs = find_lcs(seq1, seq2)
 
     if not lcs:
-        return []
+        #print("Nie można zrobić crossover, wymuszona mutacja")
+        return mutate_path(G, seq1, oligo_count, oligo_counts_dict_original)
 
     idx = seq1.index(lcs[0])
     new_seq = seq1[:idx] + seq2[seq2.index(lcs[0]):]
 
     return new_seq
-
-
-def mutate_path_ai(graph, path, oligo_count, oligo_counts_dict):
-    # wybierz losowy indeks na którym dokonamy podziału
-    index = random.randint(0, len(path) - 1)
-
-    # przetnij ścieżkę na wybranym indeksie
-    new_path = path[:index + 1]
-
-    # stwórz nową część ścieżki korzystając z create_paths
-    spectrum = new_path[-1]
-    new_part = create_paths(graph, spectrum, [], oligo_count - len(new_path) + 1, oligo_counts_dict)
-
-    # dodaj nową część ścieżki do nowej ścieżki
-    new_path.extend(new_part)
-
-    return new_path
-
-
-def create_path_using_weights(G, start, path, desired_length, oligo_counts_dict_original):
-    oligo_counts_dict = copy.deepcopy(oligo_counts_dict_original)
-    start_node = start
-    path.append(start_node)
-    oligo_counts_dict[start_node] -= 1
-
-    while len(path) < desired_length:
-        current_node = path[-1]
-        neighbors = list(G.neighbors(current_node))
-        weights = [G[current_node][neighbor][0]['weight'] for neighbor in neighbors]
-        max_weight = max(weights)
-        max_weight_neighbors = [neighbor for neighbor in neighbors if
-                                G[current_node][neighbor][0]['weight'] == max_weight]
-        next_node = max_weight_neighbors[0]
-
-        if oligo_counts_dict[next_node] > 0:
-            path.append(next_node)
-            oligo_counts_dict[next_node] -= 1
-        else:
-            break
-
-    return path
-
-def create_paths_ai(G, start, length, oligo_counts_dict_original):
-    oligo_counts_dict = copy.deepcopy(oligo_counts_dict_original)
-    paths = [[start]]
-    for _ in range(length-1):
-        new_paths = []
-        for path in paths:
-            curr_node = path[-1]
-            neighbors = list(G.successors(curr_node))
-            if not neighbors:
-                continue
-            weights = []
-            for neighbor in neighbors:
-                weights.append(G[curr_node][neighbor][0]['weight'])
-            max_weight = max(weights)
-            candidates = [neighbors[i] for i, weight in enumerate(weights) if weight == max_weight]
-            next_node = candidates[0]
-            if next_node not in oligo_counts_dict:
-                continue
-            if oligo_counts_dict[next_node] == 0:
-                continue
-            oligo_counts_dict[next_node] -= 1
-            new_path = path + [next_node]
-            new_paths.append(new_path)
-        if not new_paths:
-            break
-        paths = new_paths
-    return paths
