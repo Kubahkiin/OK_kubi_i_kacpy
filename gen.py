@@ -144,12 +144,10 @@ def random_starting_node(G):
     return random.choice(nodes)
 
 
-def add_random_edge(G, vertex, oligo_count_immature):
+def add_random_edge(G, vertex):
     successors = []
 
     for successor in G.successors(vertex):
-        if oligo_count_immature[successor] == 0:
-            continue
         successors.append(successor)
 
     random_vertex = random.choice(successors)
@@ -163,7 +161,7 @@ def mutate_path(G, original_path, max_length, oligo_counts_dict_original):
         oligo_count_immature[oligo] -= 1
 
     new_max_length = max_length - len(immature_path)
-    resume_vertex = add_random_edge(G, immature_path[mutation_position - 1], oligo_count_immature)  # wylosuj następnika dla wierzchołka w którym ma dojść do mutacji
+    resume_vertex = add_random_edge(G, immature_path[mutation_position - 1])  # wylosuj następnika dla wierzchołka w którym ma dojść do mutacji
     return create_paths(G, resume_vertex, immature_path, new_max_length, oligo_count_immature)
 
 def build_sequence(G, path):
