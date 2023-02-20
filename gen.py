@@ -106,18 +106,11 @@ def create_paths(G, start, path, max_length, oligo_counts_dict_original):
     curr = start
     path.append(curr)
     oligo_counts_dict[curr] -= 1
-    # display list of successors of the starting node
-    # jakas petla while nie jest długość taka jak n - (k - 1)
-    #print(path)
-    #print(len(path))
     for step in range(max_length):
-        #print(path)
-        #print(len(path))
         chosen_one = 0
         chosen_weight = 0
         for successor in G.successors(curr):
             # print(f"Waga krawędzi prowadzącej z {curr} do następnika {successor}: {G.edges[curr, successor, 0]['weight']}")
-            # funkcja ktora wybiera nastepny wierzcholek do sciechy
             successor_weight = G.edges[curr, successor, 0]['weight']
 
             if oligo_counts_dict[successor] == 0:
@@ -286,11 +279,6 @@ def natural_selection(solutions, max_population):
         new_solutions = solutions[:max_population]
 
     return new_solutions
-
-
-##############################
-#### Wygenerowane funkcje ####
-##############################
 
 def find_lcs(seq1, seq2):
     """

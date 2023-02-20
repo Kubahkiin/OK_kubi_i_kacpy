@@ -1,23 +1,23 @@
 import gen
 
 # parametry
-n = 300  # długość sekwencji
+n = 600  # długość sekwencji
 k = 7  # długość podciągu
-ne = 0  # błędy negatywne
-pe = 0  # błędy pozytywne
+ne = 300  # błędy negatywne
+pe = 300  # błędy pozytywne
 pop = 50  # populacja
 generations = 10  # liczba iteracji metaheurystyki
 mutation_chance = 5  # szansa na losowe mutacje
 top = 5  # ilość wybranych najlepszych rozwiązań do krzyżowania
 lucky_chance = 5  # szansa na przejście do krzyżowania dla pozostałych
 max_population = 100  # maksymalna liczba populacji na generację
-instances = 10  # liczna instancji
+instances = 1  # liczba instancji
 #
 oligo_count = n - (k - 1)
 
 grouped_results = []
 
-seq = gen.load_from("dna_300.txt")
+seq = gen.load_from(f"dna_{n}.txt")
 numerek = 1
 for steps in range(instances):
     print(f'INSTANCJA NR {numerek}\n')
@@ -31,21 +31,17 @@ for steps in range(instances):
     gen.positive_errors(spectrum, pe, k)
 
     start_oligo = original_seq_spectrum[0]
-    # print(f'Oligonukleotyd startowy: {start_oligo}')
-
     # sortowanie w celu pomieszania sekwnecji
     spectrum.sort()
 
     oligo_counts_dict = gen.oligo_counter(spectrum)
-
-    # print(f"To nasz super słownik policzony{oligo_counts_dict}")
 
     # graph itd
     graph = gen.create_graph(spectrum)
     paths = []
     path = []
     paths.append(gen.create_paths(graph, start_oligo, path, oligo_count, oligo_counts_dict))
-    # paths.append(gen.create_path_using_weights(graph, start_oligo, path, oligo_count, oligo_counts_dict))
+
 
     first_path = paths[0]
     for x in range(1, pop):
@@ -65,13 +61,9 @@ for steps in range(instances):
         similarity = gen.compare(seq, s.sequence)
         solutions.append(s)
 
-    # gen.display_solutions(solutions, seq)
-    # print("Ścieżki posortowane względem pokrycia")
-
     original_solution = gen.path_to_solution(graph, first_path)
     best_solutions = [
         (original_solution.mean_coverage, original_solution.coverage, gen.compare(seq, original_solution.sequence))]
-    # best_solutions[7]
     for generation in range(generations):
         print(f'GENERACJA {generation + 1}\n')
         # Eliminacja zbyt krótkich ścieżek
@@ -99,13 +91,13 @@ for steps in range(instances):
         # Eliminacja ostatnich pozycji w rankingu
         solutions = gen.natural_selection(solutions, max_population)
         # Wybór obecnej najlepszej ścieżki
-        # print("Najlepsze rozwiązanie w tej generacji: ")
-        # gen.display_solutions([solutions[0]], seq)
+        print("Najlepsze rozwiązanie w tej generacji: ")
+        gen.display_solutions([solutions[0]], seq)
         best_solution = solutions[0]
         best_solutions.append(
             (best_solution.mean_coverage, best_solution.coverage, gen.compare(seq, best_solution.sequence)))
 
-    # gen.display_solutions_light(best_solutions)
+    #gen.display_solutions_light(best_solutions)
     grouped_results.append(best_solutions)
 
 mean_from_instances = []

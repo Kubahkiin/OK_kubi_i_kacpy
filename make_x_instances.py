@@ -1,6 +1,6 @@
 import gen
 
-jak_dlugie = 300
+jak_dlugie = 600
 
 instance = gen.dna(jak_dlugie)
 
