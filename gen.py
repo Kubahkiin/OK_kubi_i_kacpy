@@ -1,6 +1,5 @@
 import random
 import networkx as nx
-import matplotlib.pyplot as plt
 from pathlib import Path
 import copy
 
@@ -99,11 +98,6 @@ def create_graph(spectrum):
                 G.add_edge(node, other_node, weight = coverage)
             #print(f'Porównanie {node} z {other_node} = pokrywa sie na poziomie {coverage}')
 
-    nx.write_gexf(G, 'graph.xml')
-
-    nx.draw(G,with_labels=True)
-    #plt.show()
-
     return G
 
 def create_paths(G, start, path, max_length, oligo_counts_dict_original):
@@ -140,11 +134,6 @@ def create_paths(G, start, path, max_length, oligo_counts_dict_original):
 
         if curr == 0:
             return path
-            # forbidden_one = path.pop()
-            # forbidden.append(forbidden_one)
-            # oligo_counts_dict[forbidden_one] += 1
-            # curr = path[-1]
-            # continue
 
         path.append(curr)
         oligo_counts_dict[curr] -= 1
@@ -219,8 +208,8 @@ def display_solutions(solutions, original_seq):
 
 def display_solutions_light(solutions):
     for s in solutions:
-        print(f'Suma pokrycia: {s.coverage}\t'
-              f'Średnie pokrycie: {s.mean_coverage}\n')
+        print(f'Suma pokrycia: {s[0].coverage}\t'
+              f'Średnie pokrycie: {s[0].mean_coverage}\n')
 
 def ourKey(s):
   return (s.mean_coverage, s.coverage)
