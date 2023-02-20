@@ -6,17 +6,20 @@ k = 7   #długość podciągu
 ne = 150 #błędy negatywne
 pe = 200  #błędy pozytywne
 pop = 50 #populacja
-gen_iter = 50 #liczba iteracji metaheurystyki
+generations = 50 #liczba iteracji metaheurystyki
 mutation_chance = 5 #szansa na losowe mutacje
 top = 5 # ilość wybranych najlepszych rozwiązań do krzyżowania
 lucky_chance = 5 # szansa na przejście do krzyżowania dla pozostałych
 max_population = 100 # maksymalna liczba populacji na generację
+instances = 2
 #
 oligo_count = n - (k - 1)
 
+grouped_results = []
+
 seq = gen.load_from("dna_300.txt")
 numerek = 1
-for steps in range(1):
+for steps in range(instances):
     print(f'INSTANCJA NR {numerek}\n'
           f'{seq}')
     numerek += 1
@@ -70,13 +73,12 @@ for steps in range(1):
     original_solution = gen.path_to_solution(graph, first_path)
     best_solutions = [original_solution]
     #best_solutions[7]
-    for generation in range(gen_iter):
-        print(f'######################################\n'
-              f'########### GENERACJA {generation+1} ##############\n'
-              '######################################')
+    for generation in range(generations):
+        print(f'GENERACJA {generation+1}\n')
         # Eliminacja zbyt krótkich ścieżek
+        solutions = gen.kill_copies(solutions)
         killed = gen.kill(solutions, n)
-        print(f'Eliminacja za krótkich sekwencji: {killed}')
+        #print(f'Eliminacja za krótkich sekwencji: {killed}')
         # Sortowanie ścieżek po funkcji celu
         gen.ranking(solutions)
         #gen.display_solutions(solutions, seq)
@@ -84,22 +86,43 @@ for steps in range(1):
         pick = gen.pick_for_crossover(solutions, top, lucky_chance)
         solutions_to_cross = pick[0]
         lucky = pick[1]
-        print(f'Wybrano {top} najlepszych + {lucky} miało szczęście i też zostaną skrzyżowane')
+        #print(f'Wybrano {top} najlepszych + {lucky} miało szczęście i też zostaną skrzyżowane')
         #gen.display_solutions(solutions_to_cross, seq)
         # Crossover, jeśli nie można, to wymuszona mutacja
         baby_count = gen.make_babies(graph, solutions_to_cross, n, solutions, oligo_count, oligo_counts_dict)
-        print(f'W wyniku krzyżowania powstało {baby_count} nowych rozwiązań')
+        #print(f'W wyniku krzyżowania powstało {baby_count} nowych rozwiązań')
         # Mutacja wszystkich ścieżek z prawdopodobieństwem jakimś
         mutant_count = gen.random_mutations(solutions, mutation_chance, graph, oligo_count, oligo_counts_dict, n)
-        print(f'W wyniku losowych mutacji z prawdopodobieństwem {mutation_chance}% powstało {mutant_count} nowych rozwiązań')
+        #print(f'W wyniku losowych mutacji z prawdopodobieństwem {mutation_chance}% powstało {mutant_count} nowych rozwiązań')
+        solutions = gen.kill_copies(solutions)
         # Ponowny ranking
         gen.ranking(solutions)
         # Eliminacja ostatnich pozycji w rankingu
         solutions = gen.natural_selection(solutions, max_population)
         # Wybór obecnej najlepszej ścieżki
-        print("Najlepsze rozwiązanie w tej generacji: ")
+        #print("Najlepsze rozwiązanie w tej generacji: ")
         #gen.display_solutions([solutions[0]], seq)
-        best_solutions.append(solutions[0])
+        best_solution = solutions[0]
+        best_solutions.append((best_solution, gen.compare(seq ,best_solution.sequence)))
 
 
-    gen.display_solutions_light(best_solutions, seq)
+    gen.display_solutions_light(best_solutions)
+    grouped_results.append(best_solutions)
+
+mean_from_instances = []
+for generation in range(generations):
+    pokrycie = 0
+    avg_pokrycie = 0
+    podobienstwo = 0
+    for instance in range(instances):
+        avg_pokrycie += grouped_results[instance][generation][0].mean_coverage
+        pokrycie += grouped_results[instance][generation][0].coverage
+        podobienstwo += grouped_results[instance][generation][1]
+    mean_from_instances.append((avg_pokrycie/instances, pokrycie/instances, podobienstwo/instances))
+##############################################
+#RAPORT
+print(f'Parametry:\tk = {k}\tpe = {pe}\tne = {ne}\tmutation_chance = {mutation_chance}')
+for tuple in mean_from_instances:
+    print(f'{tuple[0]},{tuple[1]},{tuple[2]}')
+
+

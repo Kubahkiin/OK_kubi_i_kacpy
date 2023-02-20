@@ -217,12 +217,10 @@ def display_solutions(solutions, original_seq):
               f'Średnie pokrycie: {s.mean_coverage}\t'
               f'Podobieństwo do oryginalnej sekwencji: {similarity}\n')
 
-def display_solutions_light(solutions, original_seq):
+def display_solutions_light(solutions):
     for s in solutions:
-        similarity = compare(original_seq, s.sequence)
         print(f'Suma pokrycia: {s.coverage}\t'
-              f'Średnie pokrycie: {s.mean_coverage}\t'
-              f'Podobieństwo do oryginalnej sekwencji: {similarity}\n')
+              f'Średnie pokrycie: {s.mean_coverage}\n')
 
 def ourKey(s):
   return (s.mean_coverage, s.coverage)
@@ -242,6 +240,10 @@ def kill(solutions, n):
         solutions.remove(dead)
 
     return len(to_kill)
+
+def kill_copies(solutions):
+    unique_solutions = set(solutions)
+    return list(unique_solutions)
 
 def pick_for_crossover(solutions, top, lucky_chance):
     chosen = []
